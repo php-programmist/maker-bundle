@@ -18,6 +18,7 @@ use PhpParser\BuilderHelpers;
 use PhpParser\Comment\Doc;
 use PhpParser\Lexer;
 use PhpParser\Node;
+use PhpParser\Node\Arg;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor;
 use PhpParser\Parser;
@@ -342,6 +343,9 @@ final class ClassSourceManipulator
         if ($attributes && $this->useAttributes) {
             foreach ($attributes as $attribute) {
                 $newPropertyBuilder->addAttribute($attribute);
+                if (['ORM', 'Column'] === $attribute->name->parts) {
+                    $this->setPropertyTypeHint($newPropertyBuilder,$attribute->args);
+                }
             }
         }
 
@@ -1459,5 +1463,63 @@ final class ClassSourceManipulator
         }
 
         return array_merge($sorted, $options);
+    }
+
+    /** @param Arg[] $args Attribute arguments */
+    private function setSimplePropertyTypeHint(Builder\Property $newPropertyBuilder,array $args)
+    {
+        $type = $this->getTypeFromArguments($args);
+        if (null === $type) {
+            return;
+        }
+        if ($this->isTypeNullable($args)) {
+            $type = '?'.$type;
+            $newPropertyBuilder->setDefault(null);
+        }
+        $newPropertyBuilder->setType($type);
+    }
+
+    /** @param Arg[] $args Attribute arguments */
+    private function getTypeFromArguments(array $args):?string
+    {
+        $type = null;
+        foreach ($args as $arg) {
+            if ('type' === $arg->name->name) {
+                $type = match ($arg->value->value){
+                    'string' => 'string',
+                    'text' => 'string',
+                    'guid' => 'string',
+                    'decimal' => 'string',
+                    'boolean' => 'bool',
+                    'integer' => 'int',
+                    'smallint' => 'int',
+                    'bigint' => 'int',
+                    'float' => 'float',
+                    'array' => 'array',
+                    'json' => 'array',
+                    'json_array' => 'array',
+                    'datetime' => '\DateTime',
+                    'datetime_immutable' => '\DateTimeImmutable',
+                    'datetimez' => '\DateTime',
+                    default => null,
+                };
+                break;
+            }
+        }
+        return $type;
+    }
+
+    /** @param Arg[] $args Attribute arguments */
+    private function isTypeNullable(array $args):bool
+    {
+        $isNullable = false;
+        foreach ($args as $arg) {
+            if ('nullable' === $arg->name->name) {
+                $isNullable = $arg->value?->name?->parts[0] ?? false;
+                break;
+            }
+        }
+
+        return $isNullable;
     }
 }
