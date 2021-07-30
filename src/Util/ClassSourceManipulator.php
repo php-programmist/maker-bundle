@@ -344,7 +344,7 @@ final class ClassSourceManipulator
             foreach ($attributes as $attribute) {
                 $newPropertyBuilder->addAttribute($attribute);
                 if (['ORM', 'Column'] === $attribute->name->parts) {
-                    $this->setPropertyTypeHint($newPropertyBuilder,$attribute->args);
+                    $this->setSimplePropertyTypeHint($newPropertyBuilder,$attribute->args);
                 }
             }
         }
