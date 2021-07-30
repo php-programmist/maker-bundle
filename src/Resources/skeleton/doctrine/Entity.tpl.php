@@ -38,10 +38,8 @@ class <?= $class_name."\n" ?>
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    <?php else: ?>#[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    <?php endif ?>private $id;
+    <?php else: ?>#[ORM\Id, ORM\Column, ORM\GeneratedValue(strategy: 'IDENTITY')]
+    <?php endif ?>private ?int $id = null;
 
     public function getId(): ?int
     {
