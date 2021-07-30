@@ -420,7 +420,7 @@ final class MakeEntity extends AbstractMaker implements InputAwareMakerInterface
             $data['scale'] = $io->ask('Scale (number of decimals to store: 100.00 would be 2)', 0, [Validator::class, 'validateScale']);
         }
 
-        if ($io->confirm('Can this field be null in the database (nullable)', false)) {
+        if ($io->confirm('Can this field be null in the database (nullable)', true)) {
             $data['nullable'] = true;
         }
 
